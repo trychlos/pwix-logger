@@ -1,7 +1,7 @@
 Package.describe({
     name: 'pwix:logger',
-    version: '1.0.0',
-    summary: 'Meteor log improvment',
+    version: '1.0.1-rc.0',
+    summary: 'An attempt to improve standard logs',
     git: 'https://github.com/trychlos/pwix-logger.git',
     documentation: 'README.md'
 });
