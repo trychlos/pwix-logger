@@ -1,0 +1,311 @@
+/*
+ * pwix:logger/src/common/classes/logger.class.js
+ */
+
+import _ from 'lodash';
+import pino from 'pino';
+import { strict as assert } from 'node:assert';
+
+import { Severity } from '../definitions/severity.def';
+
+export class LoggerClass {
+
+    // static data
+
+    // the list of instanciated (and named) loggers
+    static _byName = {
+    };
+
+    // the engine objects
+    static _engines = {
+        console: console,
+        pino: null
+    };
+
+    // associates a source function name with the corresponding engine method
+    static _sources = {
+        alert: {
+            console: 'error',
+            pino: 'error'
+        },
+        critical: {
+            console: 'error',
+            pino: 'fatal'
+        },
+        debug: {
+            console: 'debug',
+            pino: 'debug'
+        },
+        emergency: {
+            console: 'error',
+            pino: 'fatal'
+        },
+        error: {
+            console: 'error',
+            pino: 'error'
+        },
+        info: {
+            console: 'info',
+            pino: 'info'
+        },
+        log: {
+            console: 'log',
+            pino: 'info'
+        },
+        notice: {
+            console: 'info',
+            pino: 'info'
+        },
+        trace: {
+            console: 'trace',
+            pino: 'trace'
+        },
+        verbose: {
+            console: 'debug',
+            pino: 'debug'
+        },
+        warn: {
+            console: 'warn',
+            pino: 'warn'
+        },
+        warning: {
+            console: 'warn',
+            pino: 'warn'
+        }
+    };
+
+    // static methods
+
+    /**
+     * @summary This function accepts:
+     *  - zero parameter: returns the 'default' logger instance, instanciating if needed
+     *  - one parameter:
+     *    > if a string, then the name of an instance to be retrieved/instanciated
+     *    > if an object, then options to apply to this instance, only considered if not already instanciated
+     *  - two paramters: a name and an options object which doesn't contain any 'name' key.
+     * @param {String|Object} name name or options
+     * @param {Object} options options
+     */
+    static get(){
+        const count = arguments.length;
+        assert.ok( count <= 2, 'pwix:logger get() zero, one or two arguments, got', count, arguments );
+        let name = '_default_';
+        let options = {};
+        if( count > 0 ){
+            let first = arguments[0];
+            // if first (or only) argument is a string, it is expected to be the name of an instance
+            if( _.isString( first )){
+                name = first;
+                args = [ ...arguments ];
+                args.shift();
+                if( args.length ){
+                    assert.ok( args.length === 1, 'pwix:logger get() object argument must be the last one' );
+                    assert.ok( !args[0].name, 'pwix:logger get() object second argument must not contain \'name\' because it has been already provided in the first one' );
+                    options = { ...args.shift() };
+                }
+            } else if( _.isObject( first ) && first.name ){
+                name = first.name;
+                delete first[name];
+                assert.ok( count === 1, 'pwix:logger get() object argument must be the last one' );
+                options = { ...first };
+            }
+        }
+        if( LoggerClass._byName[name] ){
+            assert.ok( LoggerClass._byName[name] instanceof LoggerClass, 'pwix:logger get() expect an instance of LoggerClass, got', LoggerClass._byName[name] );
+            return LoggerClass._byName[name];
+        }
+        return new LoggerClass( name, options );
+    }
+
+    // private data
+
+    // private methods
+
+    // try to identify the caller
+    _callerHint( stackFramesToSkip = 2 ){
+        // NOTE: heuristic. Meteor bundling/minification can alter stacks.
+        const err = new Error();
+        const stack = String( err.stack || '' ).split( '\n' ).slice( stackFramesToSkip );
+        //console.debug( 'stack', stack );
+        const line = stack.find( s => s.includes( '/' ) || s.includes( '\\' ) || s.includes( 'http' ));
+        if( !line ) return '';
+        // Try to extract ".../file.js:line:col" or "http...:line:col"
+        const m = line.match( /((?:https?:\/\/.*?|packages\/.*?|\/.*?|[A-Za-z]:\\.*?)):(\d+):(\d+)/ );
+        return m ? `${m[1]}:${m[2]}` : '';
+    }
+
+    // output to stdout
+    // @parms {String} severity the severity level
+    // @parms {String} source the function name
+    //  if source is 'verbose', first arg in '...args' is the verbosity object
+    _out( severity, source, ...args ){
+
+        //console.debug( 'severity', severity );
+        //console.debug( 'source', source );
+        //console.debug( 'args', args );
+
+        const hint = this._callerHint( 4 );
+        // client-side
+        // hint.3: http://localhost:3010/packages/pwix_logger.js?hash=fbe1031aa2b37b8e3d2c0c0d6fd0e5216e2ff4db:202 in development environment
+        // hint 4: http://localhost:3010/packages/pwix_blaze-layout.js?hash=2031e778a4690b4a4b14b2bdc0858ceed902cf80:74 when originating from a package
+        // hint.4: http://localhost:3010/app/app.js?hash=5e1b776bef9938975a05aad1161dc5878654dfdd:3422 when originating from the app
+        // though in all cases DevTools provides the correct file and line (because pwix:logger is registered in IgnoreList)
+        // server-side
+        // hint.4: packages/pwix:collection-behaviours/src/common/js/behaviours.js:52 in development environment
+        // hint.4: /common/init/accounts-users.js:78 in development environment
+        //console.debug( 'hint', hint );
+        let pckname = '';
+        let filename = '';
+        let linenumber = '';
+        if( hint.match( /\/packages\/|^packages\// )){
+            if( Meteor.isClient ){
+                let idx = hint.indexOf( '/packages/' );
+                pckname = hint.substring( idx+10 );
+                idx = pckname.indexOf( '.js?' );
+                pckname = pckname.substring( 0, idx );
+                pckname = pckname.replace( '_', ':' );
+            } else {
+                pckname = hint.substring( 9 );
+                let idx = pckname.indexOf( '/' );
+                pckname = pckname.substring( 0, idx );
+                idx = hint.lastIndexOf( '/' );
+                filename = hint.substring( idx+1 );
+                linenumber = filename;
+                idx = filename.indexOf( ':' );
+                filename = filename.substring( 0, idx );
+                linenumber = linenumber.substring( idx+1 );
+                //console.debug( 'filename', filename, 'linenumber', linenumber );
+            }
+        } else {
+            if( Meteor.isClient ){
+                // nothing to hope for that apart from scanning the built app.js..
+            } else {
+                let idx = hint.indexOf( ':' );
+                filename = hint.substring( 0, idx );
+                linenumber = hint.substring( idx+1 );
+                //console.debug( 'filename', filename, 'linenumber', linenumber );
+            }
+        }
+
+        // determine the log engine - must exist and exhibit the relevant function
+        // instanciating one if needed
+        const engineName = Logger.configure().engine || 'console';
+        let engineObject = LoggerClass._engines[engineName] || console;
+
+        // determine the to-be-called function
+        let fn = 'info';
+        if( LoggerClass._sources[source] ){
+            fn = LoggerClass._sources[source][engineName] || 'info';
+        }
+
+        // this line must it be outputed, depending of its semantic and of the minimal configured severity level
+        let logable = true;
+        if( source === 'verbose' ){
+            const opts = args.shift();
+            logable = opts.verbosity & opts.against;
+        }
+        if( logable ){
+            if( Meteor.isClient ){
+                const minClient = Logger.configure().severityLevelClient || Severity.C.CRITICAL;
+                //console.debug( 'severity', severity, 'minClient', minClient, 'compare', Severity.compare( severity, minClient ));
+                logable = Severity.compare( severity, minClient ) <= 0;
+            } else {
+                const minServer = Logger.configure().severityLevelServer || Severity.C.DEBUG;
+                logable = Severity.compare( severity, minServer ) <= 0;
+            }
+        }
+
+        // severity, source are provided by the caller
+        // pckname, filename and linenumber are computed, maybe empty (or wrong)
+        if( logable ){
+            if( _.isFunction( engineObject[fn] )){
+                if( pckname ){
+                    args.unshift( pckname );
+                }
+                engineObject[fn]( ...args );
+            } else {
+                console.warn( 'unmanaged source \''+source+'\' for \''+engineName+'\' configured engine' );
+            }
+        }
+    }
+
+    // public data
+
+    /**
+     * Constructor
+     * @summary instanciate a new LoggerClass instance, trying to keep it as a singleton
+     *  We want either zero, one or two parameters:
+     *  - one: instanciate a new named instance with default options
+     *  - two: instanciate a new named instance with provided options
+     * @param {String} name
+     * @param {Object} options
+     * @returns {LoggerClass} this instance
+     */
+    constructor( name, options ){
+        assert.ok( name, 'pwix:logger LoggerClass() expect a non empty name (maybe are you trying to instanciate it yourself, but you should rather rely on Logger.get().' );
+        if( LoggerClass._byName[name] ){
+            console.warn( 'pwix:logger LoggerClass() \''+name+'\' name is already instanciated (maybe are you trying to instanciate it yourself, but you should rather rely on Logger.get().' );
+            return LoggerClass._byName[name];
+        }
+
+        LoggerClass._engines.pino = pino({
+            name: name,
+            level: 'trace',
+            // according to https://getpino.io/#/docs/api?id=interpolationvalues-any
+            // Since pino v6, we do not automatically concatenate and cast to string consecutive parameters:
+            // However, it's possible to inject a hook to modify this behavior:
+            hooks: {
+                logMethod: function( args, method ){
+                    //console.debug( 'logMethod', arguments );
+                    if( args.length > 1 ){
+                        for( let i=1 ; i<args.length ; ++i ){
+                            if( args[0].length ){
+                                args[0] += ' ';
+                            }
+                            if( _.isString( args[i] )){
+                                args[0] += '%s';
+                            } else {
+                                args[0] += '%o';
+                            }
+                        }
+                    }
+                    //console.debug( 'args', args );
+                    method.apply( this, args )
+                }
+            },
+            transport: {
+                target: 'pino-pretty',
+                options: {
+                    colorize: true
+                }
+            }
+        });
+
+        LoggerClass._byName[name] = this;
+        return this;
+    }
+
+    /*
+     * Have a method per severity level
+     */
+    alert(){ this._out( Severity.C.ALERT, 'alert', ...arguments ); }
+    critical(){ this._out( Severity.C.CRITICAL, 'critical', ...arguments ); }
+    debug(){ this._out( Severity.C.DEBUG, 'debug', ...arguments ); }
+    emergency(){ this._out( Severity.C.EMERGENCY, 'emergency', ...arguments ); }
+    error(){ this._out( Severity.C.ERROR, 'error', ...arguments ); }
+    info(){ this._out( Severity.C.INFO, 'info', ...arguments ); }
+    notice(){ this._out( Severity.C.NOTICE, 'notice', ...arguments ); }
+    warning(){ this._out( Severity.C.WARNING, 'warning', ...arguments ); }
+
+    /*
+     * Have also console-interface compliance
+     */
+    log(){ this._out( Severity.C.NOTICE, 'log', ...arguments ); }
+    trace(){ this._out( Severity.C.DEBUG, 'trace', ...arguments ); }
+    warn(){ this._out( Severity.C.WARNING, 'warn', ...arguments ); }
+
+    /*
+     * verbosity
+     */
+    verbose(){ this._out( Severity.C.DEBUG, 'verbose', ...arguments ); }
+}
