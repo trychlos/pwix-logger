@@ -13,7 +13,7 @@ Logger._conf = new ReactiveVar( _conf );
 
 Logger._defaults = {
     engine: 'console',
-    severityLevelClient: Severity.C.CRITICAL,
+    severityLevelClient: Severity.C.DEBUG,
     severityLevelServer: Severity.C.DEBUG,
     verbosity: Logger.C.Verbose.CONFIGURE
 };

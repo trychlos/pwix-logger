@@ -4,15 +4,15 @@
 
 ### 1.0.1-rc.0
 
-Release date: 
+    Release date: 
 
-- 
+    - Fix default client-side severity level to be DEBUG before any further configuration
 
 ### 1.0.0
 
-Release date: 2026- 4- 2
+    Release date: 2026- 4- 2
 
-- Initial release
+    - Initial release
 
 ---
 P. Wieser

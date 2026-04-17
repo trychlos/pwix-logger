@@ -28,6 +28,7 @@ function configure( api ){
         api.imply( ...arguments );
     };
     api.versionsFrom([ '2.9.0', '3.0-rc.0' ]);
+    _use( 'check' );
     _use( 'ecmascript' );
     _use( 'reactive-var' );
     _use( 'tmeasday:check-npm-versions@1.0.2 || 2.0.0-beta.0', 'server' );

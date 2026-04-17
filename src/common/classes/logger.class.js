@@ -86,32 +86,31 @@ export class LoggerClass {
      * @param {String|Object} name name or options
      * @param {Object} options options
      */
-    static get(){
-        const count = arguments.length;
-        assert.ok( count <= 2, 'pwix:logger get() zero, one or two arguments, got', count, arguments );
+    static get( ...callArgs ){
+        const count = callArgs.length;
+        assert.ok( count <= 2, `pwix:logger get() zero, one or two arguments, got ${count} arguments` );
         let name = '_default_';
         let options = {};
         if( count > 0 ){
-            let first = arguments[0];
+            const first = callArgs[0];
             // if first (or only) argument is a string, it is expected to be the name of an instance
             if( _.isString( first )){
                 name = first;
-                args = [ ...arguments ];
-                args.shift();
+                const args = callArgs.slice( 1 );
+                assert.ok( args.length <= 1, 'pwix:logger get() object argument must be the last one' );
                 if( args.length ){
-                    assert.ok( args.length === 1, 'pwix:logger get() object argument must be the last one' );
                     assert.ok( !args[0].name, 'pwix:logger get() object second argument must not contain \'name\' because it has been already provided in the first one' );
-                    options = { ...args.shift() };
+                    options = { ...args[0] };
                 }
             } else if( _.isObject( first ) && first.name ){
                 name = first.name;
-                delete first[name];
+                delete first.name;
                 assert.ok( count === 1, 'pwix:logger get() object argument must be the last one' );
                 options = { ...first };
             }
         }
         if( LoggerClass._byName[name] ){
-            assert.ok( LoggerClass._byName[name] instanceof LoggerClass, 'pwix:logger get() expect an instance of LoggerClass, got', LoggerClass._byName[name] );
+            assert.ok( LoggerClass._byName[name] instanceof LoggerClass, 'pwix:logger get() expect an instance of LoggerClass, got '+( typeof LoggerClass._byName[name] ));
             return LoggerClass._byName[name];
         }
         return new LoggerClass( name, options );
@@ -199,25 +198,25 @@ export class LoggerClass {
         }
 
         // this line must it be outputed, depending of its semantic and of the minimal configured severity level
-        let logable = true;
+        let loggable = true;
         if( source === 'verbose' ){
             const opts = args.shift();
-            logable = opts.verbosity & opts.against;
+            loggable = opts.verbosity & opts.against;
         }
-        if( logable ){
+        if( loggable ){
             if( Meteor.isClient ){
-                const minClient = Logger.configure().severityLevelClient || Severity.C.CRITICAL;
+                const minClient = Logger.configure().severityLevelClient || Severity.C.DEBUG;
                 //console.debug( 'severity', severity, 'minClient', minClient, 'compare', Severity.compare( severity, minClient ));
-                logable = Severity.compare( severity, minClient ) <= 0;
+                loggable = Severity.compare( severity, minClient ) <= 0;
             } else {
                 const minServer = Logger.configure().severityLevelServer || Severity.C.DEBUG;
-                logable = Severity.compare( severity, minServer ) <= 0;
+                loggable = Severity.compare( severity, minServer ) <= 0;
             }
         }
 
         // severity, source are provided by the caller
         // pckname, filename and linenumber are computed, maybe empty (or wrong)
-        if( logable ){
+        if( loggable ){
             if( _.isFunction( engineObject[fn] )){
                 if( pckname ){
                     args.unshift( pckname );
