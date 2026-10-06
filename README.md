@@ -146,6 +146,23 @@ Options are in an object with following keys:
 
     The name can be specified as a key in an options object, or as the first string of the arguments list.
 
+Instance options also accept `engine`, `severityLevelClient`, and `severityLevelServer`,
+with the same accepted values as the global configuration below. Explicit options
+are copied on first creation and override the global settings for that instance.
+Omitted options follow subsequent `Logger.configure()` changes. Options passed
+when retrieving an existing instance are validated but do not reconfigure it.
+The caller's options object is never modified.
+
+```js
+    const quiet = Logger.get({ severityLevelClient: Logger.Severity.C.ERROR });
+    const audit = Logger.get('audit', { engine: 'pino' });
+    const worker = Logger.get({ name: 'worker', severityLevelServer: Logger.Severity.C.WARNING });
+```
+
+Names must be nonempty strings. Use either an options object (with an optional
+`name`) or a name followed by an options object without a `name` key.
+`verbosity` controls global configuration diagnostics and is not an instance option.
+
 ## Configuration
 
 The package's behavior can be configured through a call to the `Logger.configure()` method, with just a single javascript object argument, which itself should only contains the options you want override.
@@ -191,6 +208,17 @@ Known configuration options are:
         Trace `Logger.configure()` calls and their result.
 
         This is the default.
+
+Calling `Logger.configure()` without arguments returns a copy of the current
+configuration. Updates require a plain object. `engine` must be `console` or
+`pino`; severity thresholds must be recognized `Logger.Severity.C` values
+(including their aliases). `Logger.Severity.C.LOG` is not a severity threshold.
+`verbosity` must be `Logger.C.Verbose.NONE` or `Logger.C.Verbose.CONFIGURE`.
+
+Invalid known values throw a `TypeError` before any configuration changes or
+instance creation. Unknown keys warn and are ignored. These rules also apply to
+instance options. Explicit `null` and `undefined` are not accepted as options or
+configuration values.
 
 Please note that `Logger.configure()` method should be called in the same terms both in client and server sides.
 

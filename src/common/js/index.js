@@ -10,6 +10,7 @@ import { Severity } from '../definitions/severity.def';
 
 import './global.js';
 import './constants.js';
+import './functions.js';
 //
 import './configure.js';
 import './get.js';

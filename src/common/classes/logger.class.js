@@ -14,13 +14,11 @@ export class LoggerClass {
     // static data
 
     // the list of instanciated (and named) loggers
-    static _byName = {
-    };
+    static _byName = Object.create( null );
 
     // the engine objects
     static _engines = {
-        console: console,
-        pino: null
+        console: console
     };
 
     // associates a source function name with the corresponding engine method
@@ -94,22 +92,27 @@ export class LoggerClass {
         let options = {};
         if( count > 0 ){
             const first = callArgs[0];
-            // if first (or only) argument is a string, it is expected to be the name of an instance
-            if( _.isString( first )){
+            if( typeof first === 'string' ){
                 name = first;
-                const args = callArgs.slice( 1 );
-                check( args, Match.Where(( args ) => args.length <= 1 ));
-                if( args.length ){
-                    check( args, Match.Where(( args ) => !args[0].name ));
-                    options = { ...args[0] };
+                if( count === 2 ){
+                    if( !_.isPlainObject( callArgs[1] ) || Object.prototype.hasOwnProperty.call( callArgs[1], 'name' )){
+                        throw new TypeError( 'pwix:logger expected options without a name' );
+                    }
+                    options = callArgs[1];
                 }
-            } else if( _.isObject( first ) && first.name ){
-                name = first.name;
-                delete first.name;
-                check( count, Match.Where(( count ) => count === 1 ));
+            } else {
+                if( count !== 1 || !_.isPlainObject( first )){
+                    throw new TypeError( 'pwix:logger expected a name or options object' );
+                }
                 options = { ...first };
+                if( Object.prototype.hasOwnProperty.call( options, 'name' )){
+                    name = options.name;
+                    delete options.name;
+                }
             }
         }
+        check( name, Match.NonEmptyString );
+        options = Logger.validateOptions( options );
         if( LoggerClass._byName[name] ){
             check( LoggerClass._byName[name], LoggerClass );
             return LoggerClass._byName[name];
@@ -191,8 +194,8 @@ export class LoggerClass {
 
         // determine the log engine - must exist and exhibit the relevant function
         // instanciating one if needed
-        const engineName = Logger.configure().engine || 'console';
-        let engineObject = LoggerClass._engines[engineName] || console;
+        const config = { ...Logger.configure(), ...this._options };
+        const engineName = config.engine;
 
         // determine the to-be-called function
         let fn = 'info';
@@ -208,11 +211,11 @@ export class LoggerClass {
         }
         if( loggable ){
             if( Meteor.isClient ){
-                const minClient = Logger.configure().severityLevelClient || Severity.C.DEBUG;
+                const minClient = config.severityLevelClient;
                 //console.debug( 'severity', severity, 'minClient', minClient, 'compare', Severity.compare( severity, minClient ));
                 loggable = Severity.compare( severity, minClient ) <= 0;
             } else {
-                const minServer = Logger.configure().severityLevelServer || Severity.C.DEBUG;
+                const minServer = config.severityLevelServer;
                 loggable = Severity.compare( severity, minServer ) <= 0;
             }
         }
@@ -220,6 +223,9 @@ export class LoggerClass {
         // severity, source are provided by the caller
         // pckname, filename and linenumber are computed, maybe empty (or wrong)
         if( loggable ){
+            const engineObject = engineName === 'pino'
+                ? ( this._pino || ( this._pino = this._createPino() ))
+                : LoggerClass._engines.console;
             if( _.isFunction( engineObject[fn] )){
                 if( pckname ){
                     args.unshift( pckname );
@@ -243,17 +249,25 @@ export class LoggerClass {
      * @param {Object} options
      * @returns {LoggerClass} this instance
      */
-    constructor( name, options ){
+    constructor( name, options = {} ){
         check( name, Match.NonEmptyString );
+        const validated = Logger.validateOptions( options );
         if( LoggerClass._byName[name] ){
             console.warn( 'pwix:logger LoggerClass() \''+name+'\' name is already instanciated (maybe are you trying to instanciate it yourself, but you should rather rely on Logger.get().' );
             return LoggerClass._byName[name];
         }
 
+        this._options = validated;
+        this._name = name;
+        this._pino = null;
+        LoggerClass._byName[name] = this;
+    }
+
+    _createPino(){
         const prettyTarget = Meteor.isServer ? Npm.require.resolve( 'pino-pretty' ) : 'pino-pretty';
 
-        LoggerClass._engines.pino = pino({
-            name: name,
+        return pino({
+            name: this._name,
             level: 'trace',
             // according to https://getpino.io/#/docs/api?id=interpolationvalues-any
             // Since pino v6, we do not automatically concatenate and cast to string consecutive parameters:
@@ -285,8 +299,6 @@ export class LoggerClass {
             }
         });
 
-        LoggerClass._byName[name] = this;
-        return this;
     }
 
     /*

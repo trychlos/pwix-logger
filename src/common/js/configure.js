@@ -25,18 +25,10 @@ Logger._defaults = {
  * @returns {Object} the package configuration
  */
 Logger.configure = function( o ){
-    if( o && _.isObject( o )){
-        // check that keys exist
-        let built_conf = {};
-        Object.keys( o ).forEach(( it ) => {
-            if( Object.keys( Logger._defaults ).includes( it )){
-                built_conf[it] = o[it];
-            } else {
-                console.warn( 'pwix:logger configure() ignore unmanaged key \''+it+'\'' );
-            }
-        });
+    if( arguments.length ){
+        const built_conf = Logger.validateOptions( o, true );
         if( Object.keys( built_conf ).length ){
-            _conf = _.merge( Logger._defaults, _conf, built_conf );
+            _conf = { ..._conf, ...built_conf };
             Logger._conf.set( _conf );
             // be verbose if asked for
             if( _conf.verbosity & Logger.C.Verbose.CONFIGURE ){
@@ -45,7 +37,7 @@ Logger.configure = function( o ){
         }
     }
     // also acts as a getter
-    return Logger._conf.get();
+    return { ...Logger._conf.get() };
 }
 
 _conf = _.merge( {}, Logger._defaults );
