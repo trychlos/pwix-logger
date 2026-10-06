@@ -174,7 +174,7 @@ Known configuration options are:
 
 - `severityLevelServer`
 
-    Default is `Logger.Severity.C.DEBUG`.
+    Default is `Logger.Severity.C.INFO`.
 
 - `verbosity`
 
