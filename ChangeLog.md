@@ -2,7 +2,7 @@
 
 ## ChangeLog
 
-### 1.0.1-rc.0
+### 1.1.0-rc.0
 
     Release date: 
 
@@ -12,6 +12,7 @@
     - Update README to make the class name consistent with the implementation
     - Update README and configure() to make the default client and server severity levels consistent
     - Define and document constructor options
+    - Improve test suite
 
 ### 1.0.0
 
