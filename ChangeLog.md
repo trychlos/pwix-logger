@@ -7,6 +7,7 @@
     Release date: 
 
     - Fix default client-side severity level to be DEBUG before any further configuration
+    - Add missing pino-pretty dependency check
 
 ### 1.0.0
 

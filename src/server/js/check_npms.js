@@ -10,7 +10,8 @@ if( false ){
 
 checkNpmVersions({
     'lodash': '^4.17.0',
-    'pino': '^10.3.0'
+    'pino': '^10.3.0',
+    'pino-pretty': '^13.1.3'
 },
     'pwix:logger'
 );

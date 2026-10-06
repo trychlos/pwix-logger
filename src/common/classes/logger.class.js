@@ -144,6 +144,8 @@ export class LoggerClass {
         //console.debug( 'args', args );
 
         const hint = this._callerHint( 4 );
+        //console.debug( 'hint', hint );
+
         // client-side
         // hint.3: http://localhost:3010/packages/pwix_logger.js?hash=fbe1031aa2b37b8e3d2c0c0d6fd0e5216e2ff4db:202 in development environment
         // hint 4: http://localhost:3010/packages/pwix_blaze-layout.js?hash=2031e778a4690b4a4b14b2bdc0858ceed902cf80:74 when originating from a package
