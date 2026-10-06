@@ -9,6 +9,7 @@
     - Fix default client-side severity level to be DEBUG before any further configuration
     - Add missing pino-pretty dependency check
     - Fix module path resolution handling in this bundled environment (https://github.com/pinojs/pino/blob/main/docs/bundling.md)
+    - Update README to make the class name consistent with the implementation
 
 ### 1.0.0
 

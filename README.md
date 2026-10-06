@@ -59,48 +59,48 @@ The exported `Logger` global object provides following items:
 
 #### Classes
 
-##### `Logger.Logger`
+##### `Logger.LoggerClass`
 
 The actual Logger class. It provides following methods:
 
 1. Severity-based
 
-    - `Logger.Logger.alert()`
+    - `Logger.LoggerClass.alert()`
 
-    - `Logger.Logger.critical()`
+    - `Logger.LoggerClass.critical()`
 
-    - `Logger.Logger.debug()`
+    - `Logger.LoggerClass.debug()`
 
-    - `Logger.Logger.emergency()`
+    - `Logger.LoggerClass.emergency()`
 
-    - `Logger.Logger.error()`
+    - `Logger.LoggerClass.error()`
 
-    - `Logger.Logger.info()`
+    - `Logger.LoggerClass.info()`
 
-    - `Logger.Logger.notice()`
+    - `Logger.LoggerClass.notice()`
 
-    - `Logger.Logger.warning()`
+    - `Logger.LoggerClass.warning()`
 
 2. `console`-interface compliance
 
-    - `Logger.Logger.log()` mapped to `Logger.Logger.notice()`
+    - `Logger.LoggerClass.log()` mapped to `Logger.LoggerClass.notice()`
 
-    - `Logger.Logger.warn()` mapped to `Logger.Logger.warning()`
+    - `Logger.LoggerClass.warn()` mapped to `Logger.LoggerClass.warning()`
 
-    - `Logger.Logger.trace()` mapped to `Logger.Logger.debug()`
+    - `Logger.LoggerClass.trace()` mapped to `Logger.LoggerClass.debug()`
 
     NB. A mapping suggestion from `console`
 
-    - `console.debug(data[, ...args])` -> `Logger.Logger.debug()`
-    - `console.error([data][, ...args])` -> `Logger.Logger.error()`
-    - `console.info([data][, ...args])` -> `Logger.Logger.info()`
-    - `console.log([data][, ...args])` -> `Logger.Logger.notice()`
-    - `console.trace([message][, ...args])` -> `Logger.Logger.debug()`
-    - `console.warn([data][, ...args])` -> `Logger.Logger.warning()`
+    - `console.debug(data[, ...args])` -> `Logger.LoggerClass.debug()`
+    - `console.error([data][, ...args])` -> `Logger.LoggerClass.error()`
+    - `console.info([data][, ...args])` -> `Logger.LoggerClass.info()`
+    - `console.log([data][, ...args])` -> `Logger.LoggerClass.notice()`
+    - `console.trace([message][, ...args])` -> `Logger.LoggerClass.debug()`
+    - `console.warn([data][, ...args])` -> `Logger.LoggerClass.warning()`
 
 3. Verbosity
 
-    - `Logger.Logger.verbose( verbosityObject, ...args )`
+    - `Logger.LoggerClass.verbose( verbosityObject, ...args )`
 
         where `verbosityObject` is an object with following keys:
 
@@ -128,9 +128,9 @@ The managed severities as of RFC 5424 - The Syslog Protocol:
 
 See [below](#configuration).
 
-##### `Logger.get( options<Object> ): <Logger.Logger>`
+##### `Logger.get( options<Object> ): <Logger.LoggerClass>`
 
-Returns the instanciated Logger.Logger instance, instanciating a new instance if not already done.
+Returns the instanciated Logger.LoggerClass instance, instanciating a new instance if not already done.
 
 In the most usual case, you will need a single, unnamed, logger instance for all your application.
 
@@ -170,7 +170,7 @@ Known configuration options are:
 
     The minimum severity level to be logged to the client.
 
-    Default is `Logger.Severity.C.CRITICAL`.
+    Default is `Logger.Severity.C.INFO`.
 
 - `severityLevelServer`
 
