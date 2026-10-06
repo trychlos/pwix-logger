@@ -4,7 +4,8 @@
 
 import _ from 'lodash';
 import pino from 'pino';
-import { strict as assert } from 'node:assert';
+
+import { check, Match } from 'meteor/check';
 
 import { Severity } from '../definitions/severity.def';
 
@@ -88,7 +89,7 @@ export class LoggerClass {
      */
     static get( ...callArgs ){
         const count = callArgs.length;
-        assert.ok( count <= 2, `pwix:logger get() zero, one or two arguments, got ${count} arguments` );
+        check( count, Match.Where(( count ) => count <= 2 ));
         let name = '_default_';
         let options = {};
         if( count > 0 ){
@@ -97,20 +98,20 @@ export class LoggerClass {
             if( _.isString( first )){
                 name = first;
                 const args = callArgs.slice( 1 );
-                assert.ok( args.length <= 1, 'pwix:logger get() object argument must be the last one' );
+                check( args, Match.Where(( args ) => args.length <= 1 ));
                 if( args.length ){
-                    assert.ok( !args[0].name, 'pwix:logger get() object second argument must not contain \'name\' because it has been already provided in the first one' );
+                    check( args, Match.Where(( args ) => !args[0].name ));
                     options = { ...args[0] };
                 }
             } else if( _.isObject( first ) && first.name ){
                 name = first.name;
                 delete first.name;
-                assert.ok( count === 1, 'pwix:logger get() object argument must be the last one' );
+                check( count, Match.Where(( count ) => count === 1 ));
                 options = { ...first };
             }
         }
         if( LoggerClass._byName[name] ){
-            assert.ok( LoggerClass._byName[name] instanceof LoggerClass, 'pwix:logger get() expect an instance of LoggerClass, got '+( typeof LoggerClass._byName[name] ));
+            check( LoggerClass._byName[name], LoggerClass );
             return LoggerClass._byName[name];
         }
         return new LoggerClass( name, options );
@@ -243,11 +244,13 @@ export class LoggerClass {
      * @returns {LoggerClass} this instance
      */
     constructor( name, options ){
-        assert.ok( name, 'pwix:logger LoggerClass() expect a non empty name (maybe are you trying to instanciate it yourself, but you should rather rely on Logger.get().' );
+        check( name, Match.NonEmptyString );
         if( LoggerClass._byName[name] ){
             console.warn( 'pwix:logger LoggerClass() \''+name+'\' name is already instanciated (maybe are you trying to instanciate it yourself, but you should rather rely on Logger.get().' );
             return LoggerClass._byName[name];
         }
+
+        const prettyTarget = Meteor.isServer ? Npm.require.resolve( 'pino-pretty' ) : 'pino-pretty';
 
         LoggerClass._engines.pino = pino({
             name: name,
@@ -275,7 +278,7 @@ export class LoggerClass {
                 }
             },
             transport: {
-                target: 'pino-pretty',
+                target: prettyTarget,
                 options: {
                     colorize: true
                 }
