@@ -14,6 +14,7 @@
     - Define and document constructor options
     - Improve test suite
     - Fix server package-name extraction from absolute stack paths
+    - Fix server package-name extraction from flattened Meteor bundle paths
 
 ### 1.0.0
 

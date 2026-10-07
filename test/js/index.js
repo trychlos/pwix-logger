@@ -58,18 +58,20 @@ Tinytest.add( 'logger - named options are copied and engines are independent', (
     test.equal( pinoCalls, [[ 'pino' ]] );
 }));
 
-Tinytest.add( 'logger - server package prefix supports relative and absolute paths', ( test ) => {
+Tinytest.add( 'logger - server package prefix supports source and bundle paths', ( test ) => {
     if( Meteor.isServer ){
         isolated(( calls ) => {
             const logger = Logger.get();
             for( const hint of [
                 'packages/pwix:accounts-manager/src/server/js/users_accounts.js:28',
-                '/home/pierre/app/packages/pwix:accounts-manager/src/server/js/users_accounts.js:28'
+                '/home/pierre/app/packages/pwix:accounts-manager/src/server/js/users_accounts.js:28',
+                '/home/pierre/app/.meteor/local/build/programs/server/packages/pwix_accounts-manager.js:123'
             ] ){
                 logger._callerHint = () => hint;
                 logger.info( 'onLogin()' );
             }
             test.equal( calls, [
+                [ 'pwix:accounts-manager', 'onLogin()' ],
                 [ 'pwix:accounts-manager', 'onLogin()' ],
                 [ 'pwix:accounts-manager', 'onLogin()' ]
             ]);

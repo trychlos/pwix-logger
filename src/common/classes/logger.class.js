@@ -175,7 +175,12 @@ export class LoggerClass {
             } else {
                 pckname = hint.substring( packageStart );
                 let idx = pckname.indexOf( '/' );
-                pckname = pckname.substring( 0, idx );
+                if( idx >= 0 ){
+                    pckname = pckname.substring( 0, idx );
+                } else {
+                    idx = pckname.indexOf( '.js:' );
+                    pckname = idx >= 0 ? pckname.substring( 0, idx ).replace( '_', ':' ) : '';
+                }
                 idx = hint.lastIndexOf( '/' );
                 filename = hint.substring( idx+1 );
                 linenumber = filename;
