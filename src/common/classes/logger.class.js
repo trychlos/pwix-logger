@@ -163,14 +163,17 @@ export class LoggerClass {
         let filename = '';
         let linenumber = '';
         if( hint.match( /\/packages\/|^packages\// )){
+            const marker = '/packages/';
+            const packageStart = hint.startsWith( 'packages/' )
+                ? 'packages/'.length
+                : hint.indexOf( marker ) + marker.length;
             if( Meteor.isClient ){
-                let idx = hint.indexOf( '/packages/' );
-                pckname = hint.substring( idx+10 );
-                idx = pckname.indexOf( '.js?' );
+                pckname = hint.substring( packageStart );
+                let idx = pckname.indexOf( '.js?' );
                 pckname = pckname.substring( 0, idx );
                 pckname = pckname.replace( '_', ':' );
             } else {
-                pckname = hint.substring( 9 );
+                pckname = hint.substring( packageStart );
                 let idx = pckname.indexOf( '/' );
                 pckname = pckname.substring( 0, idx );
                 idx = hint.lastIndexOf( '/' );

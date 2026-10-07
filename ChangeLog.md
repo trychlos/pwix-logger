@@ -13,6 +13,7 @@
     - Update README and configure() to make the default client and server severity levels consistent
     - Define and document constructor options
     - Improve test suite
+    - Fix server package-name extraction from absolute stack paths
 
 ### 1.0.0
 
