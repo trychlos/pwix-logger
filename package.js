@@ -1,6 +1,6 @@
 Package.describe({
     name: 'pwix:logger',
-    version: '1.1.0-rc.0',
+    version: '1.1.0',
     summary: 'An attempt to improve standard logs',
     git: 'https://github.com/trychlos/pwix-logger.git',
     documentation: 'README.md'

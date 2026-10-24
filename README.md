@@ -230,11 +230,12 @@ Starting with v 1.0.0, and in accordance with advices from [the Meteor Guide](ht
 
 Instead we check npm versions of installed packages at runtime, on server startup, in development environment.
 
-Dependencies as of v 1.0.0:
+Dependencies as of v 1.1.0:
 
 ```js
     'lodash': '^4.17.0',
-    'pino': '^10.3.0'
+    'pino': '^10.3.0',
+    'pino-pretty': '^13.1.3'
 ```
 
 Each of these dependencies should be installed at application level:
@@ -256,4 +257,4 @@ In case of support or error, please report your issue request to our [issues tra
 
 ---
 P. Wieser
-- Last updated on 2026, Apr. 2nd
+- Last updated on 2026, Oct. 24th

@@ -2,9 +2,9 @@
 
 ## ChangeLog
 
-### 1.1.0-rc.0
+### 1.1.0
 
-    Release date: 
+    Release date: 2026-10-24
 
     - Fix default client-side severity level to be DEBUG before any further configuration
     - Add missing pino-pretty dependency check
@@ -24,4 +24,4 @@
 
 ---
 P. Wieser
-- Last updated on 2026, Apr. 2nd
+- Last updated on 2026, Oct. 24th
